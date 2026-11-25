@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Life Almanac</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE personal, calm, the same bones as Rajesh's Work Tracker but about a life, not a programme
+   IDEA a tree you walk down: section > subsection > group (country, year, topic, stage, place) > item > detail
+   PICTURE "This week" page with tiles and highlights; every list is a collapsible tree, collapsed by default
+   COLOUR deep slate sidebar, pale page, white cards; one colour per section; to do indigo, waiting violet, overdue red, done green
+   TYPE Plus Jakarta Sans throughout
+   LAYOUT tree sidebar | page | item details slide in from the right; phones get a Sections drawer */
+:root{color-scheme:light dark;--fs:15px;--bg:light-dark(#f6f7fa,#111318);--card:light-dark(#fff,#191b23);--ink:light-dark(#1d2030,#e9ebf3);--mute:light-dark(#6a6f84,#9ba0b5);--faint:light-dark(#a2a6b8,#666b80);--line:light-dark(#e7e8ef,#262935);--soft:light-dark(#f1f2f7,#20222c);--nav:#1f2433;--navink:#c9cddd;--navfaint:#7d8399;--act:#5160f0;--todo:#5160f0;--wait:#7d52ee;--late:#e2484d;--done:#259a62;--fitness:#ee5a37;--stamps:#d3263a;--patents:#7d52ee;--learning:#0e8f83;--home:#d89807}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%}html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--ink);font:1rem/1.5 "Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+a{color:inherit}button{font-family:inherit}
+.app{display:grid;grid-template-columns:280px minmax(0,1fr);height:100%}
+#side{background:var(--nav);color:var(--navink);overflow-y:auto;padding:18px 10px 28px;padding-top:max(18px,env(safe-area-inset-top))}
+.brand{color:#fff;font-weight:700;font-size:1.15rem;padding:2px 12px}
+.store{font-size:.78rem;color:var(--navfaint);display:flex;gap:6px;align-items:center;padding:4px 12px 14px;background:none;border:0;cursor:pointer;text-align:left;width:100%}
+.store i{width:7px;height:7px;border-radius:50%;background:var(--navfaint);flex:none}.store.ok i{background:#3ccf8e}.store.warn i{background:#f0b429}
+.store:hover{color:#fff}
+.nh{font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--navfaint);padding:16px 12px 6px}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;text-decoration:none;color:var(--navink);font-weight:500;min-height:36px;font-size:.93rem}
+.ni:hover{background:rgba(255,255,255,.06);color:#fff}
+.ni.on{background:var(--act);color:#fff}
+.ni em{margin-left:auto;font-style:normal;font-size:.78rem;font-weight:600;color:var(--navfaint);font-variant-numeric:tabular-nums}.ni.on em{color:#e2e5ff}
+.ni .d{width:8px;height:8px;border-radius:50%;flex:none}
+.tree{list-style:none;margin:0;padding:0}
+.tree .tree{padding-left:14px;margin-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.tn{display:flex;align-items:center}
+.tw{width:22px;height:30px;flex:none;background:none;border:0;color:var(--navfaint);cursor:pointer;display:grid;place-items:center;border-radius:6px;padding:0}
+.tw:hover{color:#fff}
+.tw svg{transition:transform .15s}.tw.open svg{transform:rotate(90deg)}
+.tw.blank{visibility:hidden}
+.tn a{flex:1;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;text-decoration:none;color:var(--navink);font-size:.9rem;min-height:32px}
+.tn a:hover{background:rgba(255,255,255,.06);color:#fff}
+.tn a.on{background:var(--act);color:#fff}
+.tn a.sec{font-weight:600;color:#fff;font-size:.93rem}
+.tn a .d{width:8px;height:8px;border-radius:50%;flex:none}
+.tn a em{margin-left:auto;font-style:normal;font-size:.75rem;color:var(--navfaint);font-weight:600}.tn a.on em{color:#e2e5ff}
+.addsub{margin:2px 0 6px 36px}
+.addsub summary{font-size:.8rem;color:var(--navfaint);cursor:pointer;padding:4px 0;list-style:none}.addsub summary::-webkit-details-marker{display:none}
+.addsub form{display:flex;flex-direction:column;gap:6px;padding:4px 6px 8px 0}
+.addsub input,.addsub select{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);color:#fff}
+#main{overflow-y:auto;height:100%}
+.top{display:flex;align-items:center;gap:12px;padding:14px clamp(16px,3vw,40px);padding-top:max(14px,env(safe-area-inset-top));position:sticky;top:0;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);z-index:3}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:0 12px;max-width:620px}
+.search input{border:0;background:none;flex:1;min-height:40px;padding:0;outline:0}
+.fsz{display:flex;gap:2px}.fsz button{background:none;border:0;color:var(--mute);font-weight:700;padding:6px 8px;border-radius:8px;cursor:pointer}.fsz button:hover{background:var(--soft);color:var(--ink)}
+.menubtn{display:none}
+.page{padding:6px clamp(16px,3vw,40px) 70px;max-width:1280px}
+.crumb{font-size:.82rem;color:var(--act);font-weight:600;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:4px}
+.crumb a{text-decoration:none}.crumb a:hover{text-decoration:underline}.crumb span{color:var(--faint)}
+.page h1{font-size:clamp(1.6rem,2.5vw,2.1rem);margin-bottom:6px}
+.lede{color:var(--mute);margin:0 0 20px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;text-decoration:none;display:block}
+a.tile:hover{border-color:currentColor}
+.tile strong{display:block;font-size:2.1rem;font-weight:700;letter-spacing:-.03em;line-height:1.05}
+.tile span{color:var(--mute);font-weight:500;font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px}
+.card>h2{font-size:1.15rem;margin-bottom:12px}
+.card h3{font-size:.95rem;color:var(--act);margin:16px 0 8px}
+.card ul{margin:0;padding-left:20px}.card li{margin:6px 0}
+.muted{color:var(--mute)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px 17px;text-decoration:none;display:flex;flex-direction:column;gap:8px;min-height:124px}
+.sc:hover{border-color:var(--c)}
+.sc .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sc .n{font-weight:600;font-size:1rem}
+.sc .meta{font-size:.82rem;color:var(--mute);margin-top:auto}
+.sc .ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);font-weight:700;font-size:.8rem}
+.pbar{height:5px;border-radius:3px;background:var(--soft);overflow:hidden}.pbar i{display:block;height:100%;background:var(--c,var(--done));border-radius:3px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap;background:color-mix(in srgb,var(--bc) 12%,transparent);color:color-mix(in srgb,var(--bc) 85%,var(--ink))}
+.badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--bc)}
+.gt{border-top:1px solid var(--line)}
+.gt:first-child{border-top:0}
+.gt>summary{display:flex;align-items:center;gap:10px;padding:12px 4px;cursor:pointer;list-style:none;font-weight:600}
+.gt>summary::-webkit-details-marker{display:none}
+.gt>summary .cv{width:18px;color:var(--faint);transition:transform .15s;flex:none}
+.gt[open]>summary>.cv{transform:rotate(90deg)}
+.gt>summary .cnt{margin-left:auto;color:var(--faint);font-weight:500;font-size:.85rem;white-space:nowrap}
+.gt>summary:hover{color:var(--act)}
+.gt .gb{padding:0 0 8px 22px}
+.gt .gt>summary{font-size:.93rem;padding:9px 4px}
+.lf{display:flex;align-items:center;gap:12px;padding:10px 8px;border-radius:10px;cursor:pointer;border-top:1px solid var(--line)}
+.gb>.lf:first-child{border-top:0}
+.lf:hover{background:var(--soft)}
+.lf.sel{background:color-mix(in srgb,var(--act) 8%,transparent)}
+.lf .t{flex:1;line-height:1.35}.lf .t b{font-weight:600}
+.lf .t small{display:block;color:var(--faint);font-size:.8rem;margin-top:1px}
+.lf .r{color:var(--mute);font-size:.85rem;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lf .th{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;background:var(--soft)}
+.lf.done .t b{text-decoration:line-through;color:var(--mute)}
+.lf a.lk{color:var(--act);text-decoration:none;font-weight:600;font-size:.84rem;white-space:nowrap}
+.chk{width:20px;height:20px;border-radius:6px;border:1.8px solid var(--faint);background:none;cursor:pointer;display:grid;place-items:center;color:#fff;padding:0;position:relative;flex:none}
+.chk::before{content:"";position:absolute;inset:-10px}
+.chk.on{background:var(--done);border-color:var(--done)}
+.chk.on::after{content:"";width:8px;height:5px;border:2px solid currentColor;border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+.mini{height:6px;width:80px;border-radius:3px;background:var(--soft);overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}.mini i{display:block;height:100%;background:var(--c,var(--act))}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 10px}
+.tools button{font:inherit;font-size:.82rem;font-weight:600;background:none;border:0;color:var(--act);cursor:pointer;padding:4px 0}
+form.add{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+form.add input[type=text],form.add input[type=url]{flex:1 1 14em}
+form.add input[type=number],form.add input[type=date],form.add select{flex:0 1 10em}
+input,select,textarea{font:inherit;font-size:.95rem;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:40px}
+textarea{width:100%;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid color-mix(in srgb,var(--act) 60%,transparent);outline-offset:1px}
+.btn{font:inherit;font-weight:600;font-size:.9rem;border:0;border-radius:10px;padding:9px 16px;min-height:40px;background:var(--act);color:#fff;cursor:pointer;white-space:nowrap}
+.btn.soft{background:var(--soft);color:var(--ink)}.btn.danger{background:none;color:var(--late);border:1px solid color-mix(in srgb,var(--late) 35%,transparent)}
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:20px;color:var(--mute);text-align:center;margin:8px 0}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+.fig{position:relative;height:230px}.fig>svg{position:absolute;inset:0;width:100%;height:100%}.fig.sm{height:170px}
+svg text{font:12px "Plus Jakarta Sans",sans-serif;fill:var(--mute);paint-order:stroke;stroke:var(--card);stroke-width:4px}
+.bars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:140px}
+.bars div{display:flex;flex-direction:column;align-items:center;justify-content:end;height:100%;gap:4px;font-size:.78rem;color:var(--mute)}
+.bars u{display:block;width:100%;max-width:32px;background:var(--fitness);border-radius:6px 6px 2px 2px}
+.hrow{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr) auto;gap:12px;align-items:center;padding:5px 0;font-size:.9rem}
+.hrow .track{height:10px;border-radius:5px;background:var(--soft);overflow:hidden;display:flex}.hrow .track i{display:block;height:100%}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,13px);grid-auto-columns:13px;gap:3px;overflow-x:auto}.heat i{border-radius:3px;background:var(--soft)}
+.habits{display:flex;flex-wrap:wrap;gap:8px}
+.habit{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 8px;background:var(--card);cursor:pointer;font:inherit;font-weight:500;color:var(--ink)}
+.habit.on{background:color-mix(in srgb,var(--done) 12%,var(--card));border-color:color-mix(in srgb,var(--done) 40%,transparent)}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--act) 9%,var(--card));border:1px solid color-mix(in srgb,var(--act) 30%,transparent);border-radius:14px;padding:12px 16px;margin-bottom:16px}
+.banner p{margin:0;flex:1 1 16em;font-size:.92rem}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(470px,100%);background:var(--card);border-left:1px solid var(--line);transform:translateX(102%);transition:transform .22s ease;z-index:20;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)}
+#drawer.open{transform:none;box-shadow:-16px 0 48px rgba(10,14,40,.18)}
+.scrim{display:none;position:fixed;inset:0;background:rgba(10,14,40,.25);z-index:19}.scrim.on{display:block}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:18px 22px 0;padding-top:max(18px,env(safe-area-inset-top))}
+.x{background:none;border:0;color:var(--mute);font-size:1.4rem;width:36px;height:36px;border-radius:8px;cursor:pointer}.x:hover{background:var(--soft)}
+.db{padding:6px 22px 40px}
+.dtitle{font:inherit;font-size:1.4rem;font-weight:700;letter-spacing:-.02em;border:0;background:none;padding:6px 0;width:100%;resize:none;overflow:hidden;color:var(--ink);min-height:0}
+.dtitle:focus{outline:0;box-shadow:inset 0 -2px 0 var(--act)}
+.photo{margin:12px 0;border-radius:14px;overflow:hidden;border:1px solid var(--line);position:relative}
+.photo img{display:block;width:100%;max-height:360px;object-fit:contain;background:var(--soft)}
+.photo .rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:0;border-radius:8px;padding:5px 10px;font-size:.78rem;cursor:pointer}
+.ph{width:100%;aspect-ratio:16/8;border:1.5px dashed var(--line);border-radius:14px;background:none;color:var(--faint);cursor:pointer;font:inherit;margin:12px 0}.ph:hover{color:var(--ink);border-color:var(--act)}
+.field{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.field>span{color:var(--mute);font-size:.85rem}.field input,.field select{width:100%}
+.field input[type=range]{accent-color:var(--act);padding:0;border:0;min-height:30px}
+.openlink{display:flex;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:12px;background:var(--act);color:#fff;text-decoration:none;font-weight:600;margin:12px 0}
+.openlink small{opacity:.85;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt{display:block;border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0}
+.opt.on{border-color:var(--act);background:color-mix(in srgb,var(--act) 6%,transparent)}
+.opt h3{font-size:1rem;margin-bottom:4px}.opt p{margin:0 0 10px;color:var(--mute);font-size:.88rem}
+.toast{position:fixed;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:9px 10px 9px 16px;border-radius:11px;display:flex;gap:12px;align-items:center;font-size:.9rem;z-index:30;max-width:calc(100% - 32px)}
+.toast[hidden]{display:none}
+.toast button{background:none;border:1px solid color-mix(in srgb,var(--card) 40%,transparent);color:var(--card);border-radius:7px;padding:4px 10px;font:inherit;font-size:.82rem;cursor:pointer}
+@media(max-width:980px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:760px){body{overflow:auto}.app{display:block;height:auto}#main{height:auto;overflow:visible}#side{position:fixed;inset:0 auto 0 0;width:min(310px,88%);z-index:22;transform:translateX(-102%);transition:transform .22s ease}#side.open{transform:none}.menubtn{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-weight:600;color:var(--ink);min-height:40px}.fsz{display:none}.gt .gb{padding-left:10px}}
+@media(prefers-reduced-motion:reduce){#drawer,#side,.tw svg,.gt>summary .cv{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="side"><div class="brand">Life almanac</div><button class="store" id="store" type="button" data-act="storage"><i></i><span>Starting…</span></button><nav id="nav" aria-label="Sections"></nav></aside>
+<main id="main"><div class="top"><button class="menubtn" id="menubtn" type="button">Sections</button><label class="search"><span aria-hidden="true" style="color:var(--faint)">⌕</span><input type="search" id="q" placeholder="Search stamps, links, to-dos…" aria-label="Search"></label><div class="fsz"><button type="button" data-act="fs" data-k="-1" aria-label="Smaller text">A−</button><button type="button" data-act="fs" data-k="1" aria-label="Larger text">A+</button></div></div><div class="page" id="page"></div></main>
+</div>
+<aside id="drawer" aria-label="Details"></aside><div class="scrim" id="scrim"></div>
+<div class="toast" id="toast" hidden><span id="tmsg"></span><button id="undo" type="button">Undo</button></div>
+<script>
+{
+/* ================= config ================= */
+const DATA_FILE='tracker-data.json',FOLDER_NAME='Life Almanac';
+const AREAS=[
+{id:'fitness',n:'Fitness',ic:'Fi',c:'var(--fitness)',subs:[['body','Body and weight'],['workouts','Workouts'],['food','Food']]},
+{id:'stamps',n:'Stamps and coins',ic:'St',c:'var(--stamps)',subs:[['stamps','Stamps'],['coins','Coins'],['toget','To get']]},
+{id:'patents',n:'Patents and papers',ic:'Pa',c:'var(--patents)',subs:[['pipeline','Pipeline'],['actions','Next steps']]},
+{id:'learning',n:'Learning',ic:'Le',c:'var(--learning)',subs:[['reading','Reading list'],['topics','Study topics']]},
+{id:'home',n:'Home and DIY',ic:'Ho',c:'var(--home)',subs:[['projects','Projects'],['errands','Errands']]}];
+const AC=Object.fromEntries(AREAS.map(a=>[a.id,a]));
+const DEFSUB={fitness:'body',stamps:'toget',patents:'actions',learning:'topics',home:'errands'};
+const TYPES={checklist:'Checklist',reading:'Reading list',progress:'Progress tracker'};
+const STAGES=['Idea','Drafting','Locked','Submitted','Filed'];
+const KINDS=['Special cancellation','Miniature sheet','Stamp','First day cover','Coin'];
+const ST={todo:['To do','var(--todo)'],wait:['Waiting','var(--wait)'],late:['Overdue','var(--late)'],done:['Done','var(--done)']};
+/* ================= helpers ================= */
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>/^https?:\/\//.test(String(u||''))?esc(u):'';
+const pad=(n,l=2)=>String(n).padStart(l,'0');
+const dk=d=>{const z=new Date(d);return z.getFullYear()+'-'+pad(z.getMonth()+1)+'-'+pad(z.getDate())};
+const TODAY=dk(Date.now());
+const uid=()=>Math.random().toString(36).slice(2,9);
+const num=v=>{const n=parseFloat(v);return Number.isFinite(n)?n:null};
+const r1=n=>n==null?'–':(Math.round(n*10)/10).toString();
+const fmtD=k=>k?new Date(k+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';
+const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return ''}};
+const titleFrom=u=>{try{const x=new URL(u);const seg=x.pathname.split('/').filter(Boolean).pop()||'';const t=decodeURIComponent(seg).replace(/\.[a-z]+$/i,'').replace(/[-_]+/g,' ').trim();return t?t.charAt(0).toUpperCase()+t.slice(1):x.hostname.replace(/^www\./,'')}catch(e){return u}};
+const weekStart=()=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d};
+const inWeek=k=>!!k&&k>=dk(weekStart());
+const isoWeek=d=>{const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)};
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}},del:k=>{try{localStorage.removeItem(k)}catch(_){}}};
+const $=id=>document.getElementById(id);
+const chev='<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2.5 7.5 6 4 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/* ================= data model ================= */
+const blank=()=>({v:5,habits:[],checkins:{},tasks:[],subs:[],fitness:{target:null,kcalT:null,protT:null,log:[],workouts:[],food:[]},stamps:[],projects:[],reading:[],topics:[],applied:[]});
+function norm(d){const b=blank();const o=Object.assign(b,d&&typeof d==='object'?d:{});o.fitness=Object.assign(blank().fitness,o.fitness||{});for(const k of ['habits','tasks','stamps','projects','reading','topics','subs','applied'])if(!Array.isArray(o[k]))o[k]=[];for(const k of ['log','workouts','food'])if(!Array.isArray(o.fitness[k]))o.fitness[k]=[];for(const k of ['workouts','food'])o.fitness[k].forEach(x=>{if(!x.id)x.id=uid()});if(!o.checkins||typeof o.checkins!=='object')o.checkins={};return o}
+let S=blank(),prev=null,sel=null,drawer=null,q='',filter='',openSet=new Set(JSON.parse(ls.get('la-open')||'[]')),navOpen=new Set(JSON.parse(ls.get('la-nav')||'[]'));
+const subsOf=a=>[...a.subs.map(([id,n])=>({id,n,builtin:true})),...S.subs.filter(s=>s.area===a.id).map(s=>({id:s.id,n:s.n,type:s.type}))];
+const tSub=t=>t.sub||DEFSUB[t.area];
+const tStat=t=>t.status==='done'?'done':(t.due&&t.due<TODAY)?'late':t.status==='waiting'?'wait':'todo';
+const tasksOf=(area,sid)=>S.tasks.filter(t=>(!area||t.area===area)&&(!sid||tSub(t)===sid));
+const counts=ts=>{const c={todo:0,wait:0,late:0,done:0};ts.forEach(t=>c[tStat(t)]++);return c};
+const byDate=a=>[...a].sort((x,y)=>x.d<y.d?-1:1);
+function avg7(log){const L=byDate(log.filter(e=>e.w!=null));if(!L.length)return null;const last=new Date(L[L.length-1].d);const w=L.filter(e=>(last-new Date(e.d))/864e5<7);return w.reduce((s,e)=>s+e.w,0)/w.length}
+function streak(){let s=0;const d=new Date();if(!(S.checkins[dk(d)]||[]).length)d.setDate(d.getDate()-1);while((S.checkins[dk(d)]||[]).length){s++;d.setDate(d.getDate()-1)}return s}
+const isCoin=x=>x.kind==='Coin';
+/* ================= storage ================= */
+const idb={db:null,async open(){if(this.db)return this.db;return this.db=await new Promise((res,rej)=>{const r=indexedDB.open('life-almanac',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},async get(k){const db=await this.open();return new Promise(res=>{const r=db.transaction('kv').objectStore('kv').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>res(null)})},async set(k,v){const db=await this.open();return new Promise(res=>{const t=db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res();t.onerror=()=>res()})}};
+const photoCache=new Map();
+const Local={name:'This browser only',async load(){const t=ls.get('la-data');return t?JSON.parse(t):null},async save(d){ls.set('la-data',JSON.stringify(d))},async inbox(){return []},async done(){},photos:false};
+const Folder={name:'Folder',dir:null,
+ async attach(dir){this.dir=dir;await idb.set('dir',dir)},
+ async fh(name,create){return this.dir.getFileHandle(name,{create})},
+ async load(){try{const f=await (await this.fh(DATA_FILE,false)).getFile();const t=await f.text();this.mtime=f.lastModified;return t.trim()?JSON.parse(t):null}catch(e){if(e.name==='NotFoundError')return null;throw e}},
+ async save(d){const w=await (await this.fh(DATA_FILE,true)).createWritable();await w.write(JSON.stringify(d,null,2));await w.close();try{this.mtime=(await (await this.fh(DATA_FILE,false)).getFile()).lastModified}catch(_){}},
+ async changed(){try{return (await (await this.fh(DATA_FILE,false)).getFile()).lastModified!==this.mtime}catch(_){return false}},
+ async inbox(){const out=[];for await(const [name,h] of this.dir.entries()){if(h.kind==='file'&&/^update-.*\.json$/i.test(name)){try{out.push({name,body:JSON.parse(await (await h.getFile()).text())})}catch(_){out.push({name,bad:true})}}}return out.sort((a,b)=>a.name<b.name?-1:1)},
+ async done(name){try{await this.dir.removeEntry(name)}catch(_){}},
+ photos:true,
+ async upload(file){const ext=(file.name.match(/\.[a-z0-9]+$/i)||['.jpg'])[0].toLowerCase();const name='photo-'+Date.now()+'-'+uid()+ext;const w=await (await this.fh(name,true)).createWritable();await w.write(file);await w.close();return name},
+ async url(name){if(photoCache.has(name))return photoCache.get(name);try{const u=URL.createObjectURL(await (await this.fh(name,false)).getFile());photoCache.set(name,u);return u}catch(_){return ''}}};
+const Drive={name:'Google Drive',token:null,exp:0,folder:null,file:null,
+ cid(){return ls.get('la-cid')||''},
+ loadGis(){return new Promise((res,rej)=>{if(window.google?.accounts?.oauth2)return res();const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=()=>res();s.onerror=()=>rej(new Error('Could not load Google sign-in'));document.head.appendChild(s)})},
+ async signIn(){await this.loadGis();await new Promise((res,rej)=>{const c=google.accounts.oauth2.initTokenClient({client_id:this.cid(),scope:'https://www.googleapis.com/auth/drive',callback:r=>{if(r.error)return rej(new Error(r.error));this.token=r.access_token;this.exp=Date.now()+(r.expires_in-60)*1000;res()}});c.requestAccessToken({prompt:this.token?'':'consent'})});await this.locate()},
+ ready(){return this.token&&Date.now()<this.exp},
+ async api(path,opt={}){if(!this.ready())throw Object.assign(new Error('Signed out'),{code:'auth'});const r=await fetch(path.startsWith('http')?path:'https://www.googleapis.com/drive/v3/'+path,{...opt,headers:{Authorization:'Bearer '+this.token,...(opt.headers||{})}});if(r.status===401){this.token=null;throw Object.assign(new Error('Signed out'),{code:'auth'})}if(!r.ok)throw new Error('Drive error '+r.status);return r},
+ async find(qs){const r=await this.api('files?q='+encodeURIComponent(qs+' and trashed=false')+'&fields=files(id,name,modifiedTime)&pageSize=200');return (await r.json()).files||[]},
+ async locate(){const f=await this.find(`name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and 'root' in parents`);if(f.length)this.folder=f[0].id;else{const r=await this.api('files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:FOLDER_NAME,mimeType:'application/vnd.google-apps.folder'})});this.folder=(await r.json()).id}const d=await this.find(`name='${DATA_FILE}' and '${this.folder}' in parents`);this.file=d[0]?.id||null;this.mtime=d[0]?.modifiedTime||null},
+ async load(){if(!this.file)return null;const t=await (await this.api('files/'+this.file+'?alt=media')).text();return t.trim()?JSON.parse(t):null},
+ async save(d){const body=JSON.stringify(d,null,2);if(!this.file){const meta={name:DATA_FILE,parents:[this.folder],mimeType:'application/json'};const r=await this.api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',body:this.multipart(meta,new Blob([body],{type:'application/json'}))});this.file=(await r.json()).id}else{await this.api('https://www.googleapis.com/upload/drive/v3/files/'+this.file+'?uploadType=media',{method:'PATCH',headers:{'Content-Type':'application/json'},body})}const m=await (await this.api('files/'+this.file+'?fields=modifiedTime')).json();this.mtime=m.modifiedTime},
+ async changed(){if(!this.file)return false;const m=await (await this.api('files/'+this.file+'?fields=modifiedTime')).json();return m.modifiedTime!==this.mtime},
+ multipart(meta,blob){const fd=new FormData();fd.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));fd.append('file',blob);return fd},
+ async inbox(){const fs=await this.find(`'${this.folder}' in parents and name contains 'update-'`);const out=[];for(const f of fs.filter(f=>/\.json$/i.test(f.name))){try{out.push({name:f.name,id:f.id,body:JSON.parse(await (await this.api('files/'+f.id+'?alt=media')).text())})}catch(_){out.push({name:f.name,id:f.id,bad:true})}}return out.sort((a,b)=>a.name<b.name?-1:1)},
+ async done(name,item){try{await this.api('files/'+item.id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})})}catch(_){}},
+ photos:true,
+ async upload(file){const ext=(file.name.match(/\.[a-z0-9]+$/i)||['.jpg'])[0].toLowerCase();const name='photo-'+Date.now()+'-'+uid()+ext;await this.api('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',body:this.multipart({name,parents:[this.folder]},file)});return name},
+ async url(name){if(photoCache.has(name))return photoCache.get(name);try{const f=await this.find(`name='${name.replace(/'/g,'')}' and '${this.folder}' in parents`);if(!f.length)return '';const u=URL.createObjectURL(await (await this.api('files/'+f[0].id+'?alt=media')).blob());photoCache.set(name,u);return u}catch(_){return ''}}};
+let B=Local,connected=false,needs=null,saving=false,again=false;
+function storeLabel(cls,txt){const e=$('store');e.className='store '+cls;e.lastElementChild.textContent=txt}
+async function save(){ls.set('la-cache',JSON.stringify(S));if(!connected){storeLabel('warn',needs?'Not connected: changes kept in this browser':'Saved in this browser');ls.set('la-dirty','1');return}if(saving){again=true;return}saving=true;try{await B.save(S);ls.del('la-dirty');storeLabel('ok',(B===Folder?'Folder':B===Drive?'Google Drive':'This browser')+' · saved '+new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'}))}catch(e){storeLabel('warn',e.code==='auth'?'Google sign-in expired. Tap to reconnect':'Couldn’t save. Tap for storage');if(e.code==='auth'){connected=false;needs='drive'}ls.set('la-dirty','1')}saving=false;if(again){again=false;save()}}
+function applyOps(d,ops){const get=p=>String(p||'').split('.').filter(Boolean).reduce((o,k)=>o?.[k],d);let n=0;for(const op of ops||[]){try{
+ if(op.op==='replace'&&op.data){Object.assign(d,norm(op.data));n++;continue}
+ const arr=get(op.in||op.to);
+ if(op.op==='add'&&Array.isArray(arr)){const it={...op.item};if(it.id&&arr.some(x=>x.id===it.id))Object.assign(arr.find(x=>x.id===it.id),it);else{if(!it.id&&op.to!=='fitness.log')it.id=uid();if(op.to==='fitness.log'&&arr.some(x=>x.d===it.d))Object.assign(arr.find(x=>x.d===it.d),it);else arr.push(it)}n++}
+ else if(op.op==='set'&&Array.isArray(arr)){const x=arr.find(y=>y.id===op.id||(op.d&&y.d===op.d));if(x){Object.assign(x,op.fields);if(op.fields?.status==='done'&&!x.doneOn)x.doneOn=TODAY;n++}}
+ else if(op.op==='remove'&&Array.isArray(arr)){const i=arr.findIndex(y=>y.id===op.id||(op.d&&y.d===op.d));if(i>=0){arr.splice(i,1);n++}}
+ else if(op.op==='merge'){const o=get(op.at);if(o&&typeof o==='object'){Object.assign(o,op.fields);n++}}
+ else if(op.op==='checkin'){const c=d.checkins[op.date||TODAY]=d.checkins[op.date||TODAY]||[];if(!c.includes(op.habit)){c.push(op.habit);n++}}
+}catch(_){}}return n}
+let lastInbox=0;
+async function pullInbox(force){if(!connected||(!force&&Date.now()-lastInbox<20000))return;lastInbox=Date.now();try{const items=await B.inbox();let n=0,files=0;for(const it of items){if(it.bad){continue}if(!S.applied.includes(it.name)){n+=applyOps(S,it.body.ops||[]);S.applied.push(it.name);S.applied=S.applied.slice(-200);files++}await B.done(it.name,it)}if(files){S=norm(S);render();await save();toast(`Applied ${n} update${n===1?'':'s'} from Claude`)}}catch(_){}}
+async function connect(kind,fromClick){try{
+ if(kind==='folder'){let dir=Folder.dir||await idb.get('dir');if(!dir||fromClick==='pick'){dir=await window.showDirectoryPicker({id:'life-almanac',mode:'readwrite'})}const p=await dir.queryPermission({mode:'readwrite'});if(p!=='granted'){if(!fromClick){needs='folder';return false}if(await dir.requestPermission({mode:'readwrite'})!=='granted')return false}await Folder.attach(dir);B=Folder}
+ else if(kind==='drive'){if(!Drive.cid()){needs='drive';return false}if(!Drive.ready()){if(!fromClick){needs='drive';return false}await Drive.signIn()}B=Drive}
+ else B=Local;
+ const remote=await B.load();const cache=ls.get('la-cache');const dirty=ls.get('la-dirty')==='1';
+ if(dirty&&cache){const c=JSON.parse(cache);if(!remote||(c.updated||'')>(remote.updated||'')){S=norm(c);connected=true;needs=null;ls.set('la-mode',kind);await save()}else S=norm(remote)}
+ else if(remote)S=norm(remote);else if(cache)S=norm(JSON.parse(cache));
+ connected=true;needs=null;ls.set('la-mode',kind);if(!remote)await save();else{ls.set('la-cache',JSON.stringify(S));storeLabel('ok',B.name+' · connected')}
+ render();pullInbox(true);return true}catch(e){if(e.name!=='AbortError')toast(e.message||'Couldn’t connect');return false}}
+function mutate(fn,msg){prev=JSON.stringify(S);fn(S);S.updated=new Date().toISOString();render();save();if(msg)toast(msg,true)}
+let tt;function toast(m,u){$('tmsg').textContent=m;$('undo').hidden=!u;$('toast').hidden=false;clearTimeout(tt);tt=setTimeout(()=>$('toast').hidden=true,5000)}
+/* ================= routing ================= */
+function route(){const h=decodeURIComponent(location.hash.slice(1));if(!h||h==='week')return {v:'week'};if(h.startsWith('status:'))return {v:'status',st:h.slice(7)};if(h==='checkin')return {v:'checkin'};if(h==='search')return {v:'search'};const [sec,sub,...g]=h.split('/');const a=AC[sec];if(!a)return {v:'week'};if(!sub)return {v:'area',a};const s=subsOf(a).find(x=>x.id===sub);if(!s)return {v:'area',a};return {v:'sub',a,s,g:g.length?g.join('/'):null}}
+const hashOf=(a,s,g)=>'#'+[a,s,g].filter(Boolean).map(encodeURIComponent).join('/');
+/* ================= trees (group definitions) ================= */
+const statusOrder=['late','todo','wait','done'];
+function spec(a,s){const type=s.builtin?a.id+'/'+s.id:'custom/'+(s.type||'checklist');const sub=s.builtin?'':s.id;
+ const taskTree={coll:'tasks',items:tasksOf(a.id,s.id),levels:[{key:t=>tStat(t),label:k=>ST[k][0],order:(x,y)=>statusOrder.indexOf(x)-statusOrder.indexOf(y),closed:k=>k==='done',openBy:k=>k==='late'||k==='todo'}],leaf:taskLeaf};
+ if(type==='stamps/stamps'||type==='stamps/coins'){const coin=type==='stamps/coins';return {type,coll:'stamps',items:S.stamps.filter(x=>coin?isCoin(x):!isCoin(x)),levels:[{key:x=>x.owned===false?'Wishlist':(x.country||'India'),label:k=>k,order:(x,y)=>x==='Wishlist'?1:y==='Wishlist'?-1:x==='India'?-1:y==='India'?1:x.localeCompare(y),nav:true},{key:x=>x.d?x.d.slice(0,4):(x.year||'Year not set'),label:k=>k,order:(x,y)=>y.localeCompare(x)}],leaf:stampLeaf,tasks:false}}
+ if(type==='patents/pipeline')return {type,coll:'projects',items:S.projects.filter(p=>p.area==='patents'),levels:[{key:p=>p.stage||'Idea',label:k=>k,order:(x,y)=>STAGES.indexOf(x)-STAGES.indexOf(y),nav:true}],leaf:projLeaf};
+ if(type==='learning/reading'||type==='custom/reading')return {type,coll:'reading',items:S.reading.filter(x=>(x.sub||'')===sub),levels:[{key:x=>x.group||'Unsorted',label:k=>k,order:(x,y)=>x==='Unsorted'?1:y==='Unsorted'?-1:x.localeCompare(y),nav:true},{key:x=>x.read?'Read':'To read',label:k=>k,order:(x,y)=>x==='To read'?-1:1,openBy:k=>k==='To read'}],leaf:readLeaf};
+ if(type==='learning/topics')return {type,coll:'topics',items:S.topics,levels:[],leaf:topicLeaf};
+ if(type==='home/projects'||type==='custom/progress')return {type,coll:'projects',items:S.projects.filter(p=>p.area===a.id&&(p.sub||'')===sub),levels:[{key:p=>(p.progress||0)>=100?'Finished':'In progress',label:k=>k,order:(x,y)=>x==='In progress'?-1:1,closed:k=>k==='Finished'}],leaf:projLeaf};
+ if(type==='home/errands')return {...taskTree,type,items:S.tasks.filter(t=>tStat(t)!=='done'&&(t.place||tSub(t)==='errands')),levels:[{key:t=>t.place||'No place set',label:k=>k,order:(x,y)=>x==='No place set'?1:y==='No place set'?-1:x.localeCompare(y),nav:true}]};
+ return {...taskTree,type}}
+function tree(items,levels,leaf,path,depth){if(!levels.length)return items.length?items.map(leaf).join(''):'<div class="empty">Nothing here yet.</div>';const [L,...rest]=levels;const groups={};items.forEach(x=>{const k=L.key(x);(groups[k]=groups[k]||[]).push(x)});const keys=Object.keys(groups).sort(L.order||((x,y)=>x.localeCompare(y)));
+ return keys.map(k=>{const p=path+'/'+k;const isOpen=openSet.has(p)||(!openSet.has('!'+p)&&(L.openBy?L.openBy(k,depth):(depth===0&&keys.length===1&&!(L.closed&&L.closed(k)))));const n=groups[k].length;return `<details class="gt" data-p="${esc(p)}" ${isOpen?'open':''}><summary><span class="cv">${chev}</span>${esc(L.label(k))}<span class="cnt">${n} item${n===1?'':'s'}</span></summary><div class="gb">${isOpen?tree(groups[k],rest,leaf,p,depth+1):''}</div></details>`}).join('')}
+const ck=(on,act,id,label)=>`<button class="chk ${on?'on':''}" data-act="${act}" data-id="${esc(id)}" aria-label="${esc(label)}"></button>`;
+const badge=(t,c)=>`<span class="badge" style="--bc:${c}">${esc(t)}</span>`;
+const thumb=x=>x.img?`<img class="th" data-photo="${esc(x.img)}" alt="">`:'';
+function taskLeaf(t){const st=tStat(t);return `<div class="lf ${st==='done'?'done':''} ${sel&&sel.id===t.id?'sel':''}" data-sel="tasks" data-id="${esc(t.id)}" tabindex="0">${ck(st==='done','task',t.id,'Done: '+t.t)}${thumb(t)}<div class="t"><b>${esc(t.t)}</b><small>${esc([t.place,t.note].filter(Boolean).join(' · '))}</small></div>${st!=='todo'&&st!=='done'?badge(ST[st][0],ST[st][1]):''}<span class="r">${t.due?fmtD(t.due):''}</span></div>`}
+function stampLeaf(x){return `<div class="lf ${sel&&sel.id===x.id?'sel':''}" data-sel="stamps" data-id="${esc(x.id)}" tabindex="0">${thumb(x)}<div class="t"><b>${esc(x.t)}</b><small>${esc([x.kind,x.d?fmtD(x.d):'',x.issuer,x.loc].filter(Boolean).join(' · '))}</small></div>${x.owned===false?badge('Wishlist','var(--wait)'):''}</div>`}
+function readLeaf(x){return `<div class="lf ${sel&&sel.id===x.id?'sel':''}" data-sel="reading" data-id="${esc(x.id)}" tabindex="0">${ck(x.read,'read',x.id,'Read: '+x.t)}<div class="t"><b>${esc(x.t)}</b><small>${esc([host(x.url),x.note].filter(Boolean).join(' · '))}</small></div>${safeUrl(x.url)?`<a class="lk" href="${safeUrl(x.url)}" target="_blank" rel="noopener" data-stop="1">Open ↗</a>`:''}</div>`}
+function projLeaf(p){return `<div class="lf ${sel&&sel.id===p.id?'sel':''}" data-sel="projects" data-id="${esc(p.id)}" tabindex="0">${thumb(p)}<div class="t"><b>${esc(p.t)}</b><small>${esc([p.kind&&p.area==='patents'?p.kind:'',p.note].filter(Boolean).join(' · '))}</small></div>${p.area==='patents'?`<span class="r">${p.due?fmtD(p.due):''}</span>`:`<span class="r" style="--c:${AC[p.area]?.c}"><span class="mini"><i style="width:${p.progress||0}%"></i></span>${p.progress||0}%</span>`}</div>`}
+function topicLeaf(t){return `<div class="lf ${sel&&sel.id===t.id?'sel':''}" data-sel="topics" data-id="${esc(t.id)}" tabindex="0"><div class="t"><b>${esc(t.t)}</b>${t.note?`<small>${esc(t.note)}</small>`:''}</div><span class="r" style="--c:var(--learning)"><span class="mini"><i style="width:${t.p||0}%"></i></span>${t.p||0}%</span></div>`}
+function subInfo(a,s){const sp=spec(a,s);const F=S.fitness;let p=0,meta='',status=['Not started','var(--faint)'];const items=sp.items;
+ if(a.id==='fitness'&&s.id==='body'){const L=byDate(F.log.filter(e=>e.w!=null));const av=avg7(F.log);if(L.length&&F.target!=null&&L[0].w>F.target)p=Math.max(0,Math.min(1,(L[0].w-av)/(L[0].w-F.target)));meta=av!=null?`${r1(av)} kg average${F.target!=null?' · '+r1(Math.max(av-F.target,0))+' kg to go':''}`:'No weigh-ins yet';if(L.length)status=(new Date(TODAY)-new Date(L[L.length-1].d))/864e5>7?['Weigh in','var(--late)']:['Going well','var(--done)'];return {p,meta,status}}
+ if(a.id==='fitness'&&s.id==='workouts'){const days=new Set(F.workouts.filter(w=>inWeek(w.d)).map(w=>w.d)).size;p=Math.min(days/4,1);meta=`${days} active day${days===1?'':'s'} this week`;if(F.workouts.length)status=days>=3?['Going well','var(--done)']:['Keep going','var(--wait)'];return {p,meta,status}}
+ if(a.id==='fitness'&&s.id==='food'){const fd=F.food.filter(f=>f.d===TODAY);const pr=fd.reduce((x,f)=>x+(f.p||0),0);p=F.protT?Math.min(pr/F.protT,1):0;meta=`${fd.reduce((x,f)=>x+(f.kcal||0),0)} kcal · ${pr} g protein today`;if(F.food.length)status=['Logging','var(--done)'];return {p,meta,status}}
+ if(sp.coll==='stamps'){const o=items.filter(x=>x.owned!==false);const countries=new Set(o.map(x=>x.country||'India')).size;p=items.length?o.length/items.length:0;meta=`${o.length} in collection · ${countries} countr${countries===1?'y':'ies'}`;if(o.length)status=['Growing','var(--done)'];return {p,meta,status}}
+ if(sp.coll==='reading'){const r=items.filter(x=>x.read).length;p=items.length?r/items.length:0;meta=`${r}/${items.length} read`;if(items.length)status=items.length-r>15?['Big queue','var(--wait)']:['Going well','var(--done)'];return {p,meta,status}}
+ if(type(sp)==='pipeline'){p=items.length?items.reduce((x,y)=>x+STAGES.indexOf(y.stage),0)/(items.length*4):0;meta=`${items.length} items · ${items.filter(x=>x.stage==='Submitted'||x.stage==='Filed').length} submitted`;if(items.length)status=['Moving','var(--done)'];return {p,meta,status}}
+ if(sp.coll==='topics'||sp.coll==='projects'){const k=sp.coll==='topics'?'p':'progress';p=items.length?items.reduce((x,y)=>x+(y[k]||0),0)/items.length/100:0;meta=`${items.length} item${items.length===1?'':'s'} · ${Math.round(p*100)}% average`;if(items.length)status=['Going well','var(--done)'];return {p,meta,status}}
+ const c=counts(items);p=items.length?c.done/items.length:0;meta=`${c.todo+c.wait+c.late} open · ${c.done} done`;if(items.length)status=c.late?['Overdue','var(--late)']:c.todo+c.wait?['In progress','var(--todo)']:['All done','var(--done)'];return {p,meta,status}}
+const type=sp=>sp.type.split('/')[1];
+/* ================= nav ================= */
+function nav(r){const all=counts(S.tasks);const ci=S.checkins[TODAY]||[];
+ const node=(a,s)=>{const sp=spec(a,s);const lv=sp.levels.find(l=>l.nav);const key=a.id+'/'+s.id;const kids=lv?[...new Set(sp.items.map(lv.key))].sort(lv.order):[];const open=navOpen.has(key)||(r.s&&r.s.id===s.id&&r.a===a);const on=r.v==='sub'&&r.a===a&&r.s.id===s.id&&!r.g;
+  return `<li><div class="tn">${kids.length?`<button class="tw ${open?'open':''}" data-act="navtog" data-k="${esc(key)}" aria-label="Expand ${esc(s.n)}" aria-expanded="${open}">${chev}</button>`:'<span class="tw blank"></span>'}<a href="${hashOf(a.id,s.id)}" class="${on?'on':''}">${esc(s.n)}</a></div>${kids.length&&open?`<ul class="tree">${kids.map(k=>`<li><div class="tn"><span class="tw blank"></span><a href="${hashOf(a.id,s.id,k)}" class="${r.g===k&&r.s?.id===s.id?'on':''}">${esc(k)}<em>${sp.items.filter(x=>lv.key(x)===k).length}</em></a></div></li>`).join('')}</ul>`:''}</li>`};
+ $('nav').innerHTML=`<a class="ni ${r.v==='week'?'on':''}" href="#week">This week</a><a class="ni ${r.v==='checkin'?'on':''}" href="#checkin">Daily check-in<em>${ci.length}/${S.habits.length}</em></a>
+<div class="nh">TO-DOS</div>${['todo','wait','late','done'].map(k=>`<a class="ni ${r.v==='status'&&r.st===k?'on':''}" href="#status:${k}"><span class="d" style="background:${ST[k][1]}"></span>${ST[k][0]}<em>${all[k]}</em></a>`).join('')}
+<div class="nh">MY LIFE</div><ul class="tree">${AREAS.map(a=>{const open=navOpen.has(a.id)||r.a===a;const c=counts(tasksOf(a.id));return `<li><div class="tn"><button class="tw ${open?'open':''}" data-act="navtog" data-k="${a.id}" aria-label="Expand ${a.n}" aria-expanded="${open}">${chev}</button><a class="sec ${r.v==='area'&&r.a===a?'on':''}" href="#${a.id}"><span class="d" style="background:${a.c}"></span>${a.n}<em>${c.todo+c.wait+c.late||''}</em></a></div>${open?`<ul class="tree">${subsOf(a).map(s=>node(a,s)).join('')}</ul><details class="addsub"><summary>+ Add subsection</summary><form id="f-sub" data-area="${a.id}"><input type="text" name="n" placeholder="Name, like Postcards" required aria-label="Subsection name"><select name="type" aria-label="Kind of tracking">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><button class="btn">Add</button></form></details>`:''}</li>`}).join('')}</ul>
+<div class="nh">SETTINGS</div><a class="ni" href="#" data-act="storage">Storage and backup</a>`}
+/* ================= pages ================= */
+const crumbs=(...p)=>`<div class="crumb">${p.map((x,i)=>i<p.length-1?`<a href="${x[1]}">${esc(x[0])}</a><span>/</span>`:`<b style="color:var(--mute);font-weight:600">${esc(x[0])}</b>`).join('')}</div>`;
+const habitChips=()=>{const ci=S.checkins[TODAY]||[];return `<div class="habits">${S.habits.map(h=>`<button type="button" class="habit ${ci.includes(h.id)?'on':''}" data-act="habit" data-id="${esc(h.id)}"><span class="chk ${ci.includes(h.id)?'on':''}" aria-hidden="true"></span>${esc(h.t)}</button>`).join('')||'<span class="muted">No daily habits yet.</span>'}</div>`};
+const taskForm=(area,sub,ph)=>`<form class="add" id="f-task" data-area="${area}" data-sub="${esc(sub||'')}"><input type="text" name="t" placeholder="${ph}" required aria-label="New to-do">${area?'':`<select name="area" aria-label="Section">${AREAS.map(a=>`<option value="${a.id}">${a.n}</option>`).join('')}</select>`}<input type="text" name="place" placeholder="Where" aria-label="Place" style="flex:0 1 9em"><input type="date" name="due" aria-label="Due date"><button class="btn">Add</button></form>`;
+function banner(){if(connected)return '';if(needs==='folder')return `<div class="banner"><p>Your tracker folder needs one click to reconnect after the browser restarts.</p><button class="btn" data-act="reconnect" data-k="folder">Reconnect folder</button></div>`;if(needs==='drive')return `<div class="banner"><p>${Drive.cid()?'Sign in to Google to load your tracker from Drive.':'Google Drive isn’t set up on this device yet.'}</p><button class="btn" data-act="${Drive.cid()?'reconnect':'storage'}" data-k="drive">${Drive.cid()?'Continue with Google':'Set up storage'}</button></div>`;if(!ls.get('la-mode'))return `<div class="banner"><p>Choose where your tracker keeps its data: your Google Drive folder, or just this browser for now.</p><button class="btn" data-act="storage">Choose storage</button></div>`;return ''}
+function vWeek(){const all=counts(S.tasks);const ws=weekStart(),we=new Date(ws);we.setDate(ws.getDate()+6);const d=new Date();const h=d.getHours();
+ const doneWk=S.tasks.filter(t=>t.status==='done'&&inWeek(t.doneOn));const readWk=S.reading.filter(x=>x.read&&inWeek(x.readOn));const L=byDate(S.fitness.log.filter(e=>e.w!=null&&inWeek(e.d)));const woMin=S.fitness.workouts.filter(w=>inWeek(w.d)).reduce((s,w)=>s+(w.min||0),0);const stWk=S.stamps.filter(x=>inWeek(x.added)&&x.owned!==false);
+ const hl=[...doneWk.map(t=>`Done: ${esc(t.t)}`),readWk.length?`Read ${readWk.length} saved link${readWk.length>1?'s':''}`:'',L.length>1?`Weight ${r1(L[0].w)} → ${r1(L[L.length-1].w)} kg`:'',woMin?`${woMin} minutes of training`:'',stWk.length?`${stWk.length} new item${stWk.length>1?'s':''} for the collection`:''].filter(Boolean);
+ const attn=S.tasks.filter(t=>['late','wait'].includes(tStat(t)));
+ return banner()+`<h1>Good ${h<12?'morning':h<17?'afternoon':'evening'}, Rajesh</h1><p class="lede">Week ${isoWeek(d)} · ${ws.getDate()}–${we.getDate()} ${we.toLocaleDateString('en-IN',{month:'short',year:'numeric'})}</p>
+<div class="tiles">${[['todo',all.todo],['wait',all.wait],['late',all.late]].map(([k,v])=>`<a class="tile" href="#status:${k}" style="color:${ST[k][1]}"><strong>${v}</strong><span>${ST[k][0]}</span></a>`).join('')}<a class="tile" href="#status:done" style="color:var(--done)"><strong>${doneWk.length}</strong><span>Done this week</span></a></div>
+<div class="grid2"><div class="card"><h2>This week so far</h2>${hl.length?`<ul>${hl.map(x=>`<li>${x}</li>`).join('')}</ul>`:'<p class="muted" style="margin:0">Nothing ticked off yet this week.</p>'}${attn.length?`<h3>Needs a nudge</h3><ul>${attn.map(t=>`<li><a href="#" data-sel="tasks" data-id="${esc(t.id)}" style="text-decoration:none;font-weight:600">${esc(t.t)}</a> <span class="muted">· ${tStat(t)==='late'?'was due '+fmtD(t.due):'waiting'}${t.note?' · '+esc(t.note):''}</span></li>`).join('')}</ul>`:''}</div>
+<div class="card"><h2>Today’s check-in</h2>${habitChips()}<p class="muted" style="margin:14px 0 0;font-size:.88rem">${streak()} day streak · <a href="#checkin" style="color:var(--act);text-decoration:none;font-weight:600">See history</a></p></div></div>
+<div class="cards">${AREAS.map(a=>{const st=subsOf(a).map(s=>subInfo(a,s));const p=st.reduce((x,y)=>x+y.p,0)/Math.max(st.length,1);const c=counts(tasksOf(a.id));return `<a class="sc" href="#${a.id}" style="--c:${a.c}"><div class="h"><span class="ic">${a.ic}</span><span class="muted" style="font-size:.8rem">${c.todo+c.wait+c.late} open</span></div><span class="n">${a.n}</span><div class="pbar"><i style="width:${p*100}%"></i></div><span class="meta">${subsOf(a).map(s=>esc(s.n)).join(' · ')}</span></a>`}).join('')}</div>`}
+function vStatus(r){const k=r.st in ST?r.st:'todo';const items=S.tasks.filter(t=>tStat(t)===k);
+ return banner()+crumbs(['This week','#week'],[ST[k][0]])+`<h1>${ST[k][0]}</h1><p class="lede">${items.length} to-do${items.length===1?'':'s'} across your life, grouped by section.</p><div class="card">${k==='todo'?taskForm('','','Add a to-do'):''}${items.length?tree(items,[{key:t=>t.area,label:x=>AC[x]?.n||x,order:(x,y)=>AREAS.findIndex(a=>a.id===x)-AREAS.findIndex(a=>a.id===y)}],taskLeaf,'status:'+k,0):'<div class="empty">Nothing here.</div>'}</div>`}
+function vArea(r){const a=r.a;
+ return banner()+crumbs(['This week','#week'],[a.n])+`<h1>${a.n}</h1><p class="lede">Pick a part to open it.</p>
+<div class="cards">${subsOf(a).map(s=>{const x=subInfo(a,s);return `<a class="sc" href="${hashOf(a.id,s.id)}" style="--c:${a.c}"><div class="h"><span class="n">${esc(s.n)}</span>${badge(x.status[0],x.status[1])}</div><div class="pbar"><i style="width:${x.p*100}%"></i></div><span class="meta">${esc(x.meta)}</span></a>`}).join('')}</div>
+<div class="card"><h2>To-dos in ${a.n}</h2>${taskForm(a.id,'','Add a to-do')}${tasksOf(a.id).length?tree(tasksOf(a.id),[{key:t=>tSub(t),label:x=>subsOf(a).find(s=>s.id===x)?.n||x,order:(x,y)=>subsOf(a).findIndex(s=>s.id===x)-subsOf(a).findIndex(s=>s.id===y)},{key:t=>tStat(t),label:k=>ST[k][0],order:(x,y)=>statusOrder.indexOf(x)-statusOrder.indexOf(y),closed:k=>k==='done'}],taskLeaf,a.id+':todos',0):'<div class="empty">No to-dos yet.</div>'}</div>`}
+function vSub(r){const a=r.a,s=r.s,F=S.fitness;const sp=spec(a,s);const x=subInfo(a,s);const sub=s.builtin?'':s.id;const lv=sp.levels.find(l=>l.nav);
+ let items=sp.items,levels=sp.levels;if(r.g&&lv){items=items.filter(i=>lv.key(i)===r.g);levels=sp.levels.filter(l=>l!==lv)}
+ const head=banner()+crumbs(['This week','#week'],[a.n,'#'+a.id],...(r.g?[[s.n,hashOf(a.id,s.id)],[r.g]]:[[s.n]]))+`<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><h1 style="margin:0">${esc(r.g||s.n)}</h1>${r.g?'':badge(x.status[0],x.status[1])}${s.builtin?'':`<button class="btn soft" data-act="delsub" data-id="${esc(s.id)}" style="margin-left:auto">Remove subsection</button>`}</div><p class="lede" style="margin-top:6px">${r.g?`${items.length} item${items.length===1?'':'s'} in ${esc(s.n)}`:esc(x.meta)}</p>`;
+ const tools=levels.length?`<div class="tools"><button type="button" data-act="expand" data-k="1">Expand all</button><button type="button" data-act="expand" data-k="0">Collapse all</button></div>`:'';
+ const treeCard=(title,form)=>`<div class="card"><h2>${title}</h2>${form||''}${tools}${tree(items,levels,sp.leaf,hashOf(a.id,s.id,r.g),0)}</div>`;
+ if(a.id==='fitness'&&s.id==='body'){const L=byDate(F.log).reverse();const lastBf=L.find(e=>e.bf!=null),lastW=L.find(e=>e.w!=null),av=avg7(F.log);const fat=lastBf&&lastW?lastW.w*lastBf.bf/100:null;
+  const months={};L.forEach(e=>{const m=e.d.slice(0,7);(months[m]=months[m]||[]).push(e)});
+  return head+`<div class="tiles">${[['7-day average',r1(av)+' kg','var(--fitness)'],['Target',F.target!=null?r1(F.target)+' kg':'–','var(--done)'],['Fat mass',r1(fat)+' kg','var(--late)'],['Lean mass',fat!=null?r1(lastW.w-fat)+' kg':'–','var(--todo)']].map(([l,v,c])=>`<div class="tile" style="color:${c}"><strong style="font-size:1.7rem">${v}</strong><span>${l}</span></div>`).join('')}</div>
+<div class="grid2"><div class="card"><h2>Weight trend</h2>${F.log.some(e=>e.w!=null)?'<div class="fig"><svg id="cw" role="img" aria-label="Weight trend"></svg></div><p class="muted" style="margin:8px 0 0;font-size:.85rem">Dots are weigh-ins, the line is the 7-day average, dashed is your target.</p>':'<div class="empty">Log your first weigh-in, or tell Claude “weighed 92.4 today”.</div>'}</div>
+<div class="card"><h2>Fat vs lean mass</h2>${F.log.filter(e=>e.w!=null&&e.bf!=null).length>1?'<div class="fig sm"><svg id="cc" role="img" aria-label="Fat and lean mass"></svg></div><p class="muted" style="margin:8px 0 0;font-size:.85rem">Lean going up while fat goes down is muscle gain with fat loss.</p>':'<div class="empty">Needs two weigh-ins with body fat %, from a smart scale or a monthly InBody or DEXA scan.</div>'}</div></div>
+<div class="card"><h2>Weigh-ins</h2><form class="add" id="f-body"><input type="date" name="d" value="${TODAY}" aria-label="Date"><input type="number" step="0.1" name="w" placeholder="Weight kg" aria-label="Weight kg"><input type="number" step="0.1" name="bf" placeholder="Body fat %" aria-label="Body fat %"><input type="number" step="0.5" name="waist" placeholder="Waist cm" aria-label="Waist cm"><button class="btn">Log</button></form>
+${Object.keys(months).map(m=>{const p='body/'+m;const o=openSet.has(p)||(!openSet.has('!'+p)&&m===Object.keys(months)[0]);return `<details class="gt" data-p="${p}" ${o?'open':''}><summary><span class="cv">${chev}</span>${new Date(m+'-01T00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'})}<span class="cnt">${months[m].length} weigh-ins</span></summary><div class="gb">${months[m].map(e=>`<div class="lf" style="cursor:default"><div class="t"><b>${fmtD(e.d)}</b><small>${[e.w!=null?e.w+' kg':'',e.bf!=null?e.bf+'% fat':'',e.waist!=null?e.waist+' cm waist':''].filter(Boolean).join(' · ')}</small></div><button class="x" data-act="dellog" data-id="${esc(e.d)}" aria-label="Delete">×</button></div>`).join('')}</div></details>`}).join('')||''}
+<details class="gt"><summary><span class="cv">${chev}</span>Targets</summary><div class="gb"><form class="add" id="f-tgt"><input type="number" step="0.1" name="target" value="${F.target??''}" placeholder="Target kg" aria-label="Target weight"><input type="number" name="kcalT" value="${F.kcalT??''}" placeholder="kcal per day" aria-label="Calorie target"><input type="number" name="protT" value="${F.protT??''}" placeholder="Protein g" aria-label="Protein target"><button class="btn soft">Save</button></form></div></details></div>`+treeCard('Fitness to-dos',taskForm('fitness','','Add a fitness to-do'))}
+ if(a.id==='fitness'&&s.id==='workouts'){const wk=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=dk(d);wk.push({k,m:F.workouts.filter(w=>w.d===k).reduce((x2,w)=>x2+(w.min||0),0)})}const mx=Math.max(60,...wk.map(w=>w.m));const W=byDate(F.workouts).reverse();const weeks={};W.forEach(w=>{const d=new Date(w.d+'T00:00');d.setDate(d.getDate()-((d.getDay()+6)%7));const k=dk(d);(weeks[k]=weeks[k]||[]).push(w)});
+  return head+`<div class="grid2"><div class="card"><h2>Last 7 days</h2><div class="bars">${wk.map(w=>`<div><span>${w.m||''}</span><u style="height:${Math.max(w.m?6:2,w.m/mx*105)}px;${w.m?'':'opacity:.25'}"></u><span>${new Date(w.k+'T00:00').toLocaleDateString('en-IN',{weekday:'narrow'})}</span></div>`).join('')}</div></div>
+<div class="card"><h2>Log a session</h2><form class="add" id="f-wo"><input type="date" name="d" value="${TODAY}" aria-label="Date"><input type="text" name="kind" placeholder="Strength, run, walk…" aria-label="Type"><input type="number" name="min" placeholder="Minutes" aria-label="Minutes"><button class="btn">Log</button></form></div></div>
+<div class="card"><h2>Sessions</h2>${Object.keys(weeks).map((k,i)=>{const p='wo/'+k;const o=openSet.has(p)||(!openSet.has('!'+p)&&i===0);const tot=weeks[k].reduce((x2,w)=>x2+(w.min||0),0);return `<details class="gt" data-p="${p}" ${o?'open':''}><summary><span class="cv">${chev}</span>Week of ${fmtD(k)}<span class="cnt">${weeks[k].length} sessions · ${tot} min</span></summary><div class="gb">${weeks[k].map(w=>`<div class="lf" style="cursor:default"><div class="t"><b>${esc(w.kind||'Workout')}</b><small>${fmtD(w.d)}</small></div><span class="r">${w.min} min</span><button class="x" data-act="delwo" data-id="${esc(w.id)}" aria-label="Delete">×</button></div>`).join('')}</div></details>`}).join('')||'<div class="empty">No sessions yet.</div>'}</div>`}
+ if(a.id==='fitness'&&s.id==='food'){const days={};byDate(F.food).reverse().forEach(f=>(days[f.d]=days[f.d]||[]).push(f));const fd=F.food.filter(f=>f.d===TODAY);const kc=fd.reduce((x2,f)=>x2+(f.kcal||0),0),pr=fd.reduce((x2,f)=>x2+(f.p||0),0);const mx=Math.max(kc,F.kcalT||0,1),mp=Math.max(pr,F.protT||0,1);
+  return head+`<div class="grid2"><div class="card"><h2>Today</h2><div class="hrow"><span>Calories</span><div class="track"><i style="width:${kc/mx*100}%;background:var(--fitness)"></i></div><b>${kc}${F.kcalT?' / '+F.kcalT:''}</b></div><div class="hrow"><span>Protein</span><div class="track"><i style="width:${pr/mp*100}%;background:var(--fitness)"></i></div><b>${pr}${F.protT?' / '+F.protT:''} g</b></div>${F.kcalT||F.protT?'':'<p class="muted" style="font-size:.85rem">Set targets under Body and weight.</p>'}</div>
+<div class="card"><h2>Log a meal</h2><form class="add" id="f-food"><input type="text" name="t" placeholder="What you ate" aria-label="Meal"><input type="number" name="kcal" placeholder="kcal" aria-label="Calories"><input type="number" name="p" placeholder="Protein g" aria-label="Protein"><button class="btn">Log</button></form></div></div>
+<div class="card"><h2>Meals by day</h2>${Object.keys(days).map((k,i)=>{const p='food/'+k;const o=openSet.has(p)||(!openSet.has('!'+p)&&i===0);return `<details class="gt" data-p="${p}" ${o?'open':''}><summary><span class="cv">${chev}</span>${k===TODAY?'Today':fmtD(k)}<span class="cnt">${days[k].reduce((x2,f)=>x2+(f.kcal||0),0)} kcal · ${days[k].reduce((x2,f)=>x2+(f.p||0),0)} g</span></summary><div class="gb">${days[k].map(f=>`<div class="lf" style="cursor:default"><div class="t"><b>${esc(f.t||'Meal')}</b></div><span class="r">${f.kcal||0} kcal · ${f.p||0} g</span><button class="x" data-act="delfood" data-id="${esc(f.id)}" aria-label="Delete">×</button></div>`).join('')}</div></details>`}).join('')||'<div class="empty">Nothing logged yet.</div>'}</div>`}
+ if(sp.coll==='stamps'){const coin=s.id==='coins';const owned=sp.items.filter(i=>i.owned!==false);const kinds=coin?[]:KINDS.filter(k=>k!=='Coin');
+  return head+`<div class="tiles">${(coin?[['Coins',owned.length],['Countries',new Set(owned.map(i=>i.country||'India')).size],['Wishlist',sp.items.length-owned.length],['Added this week',owned.filter(i=>inWeek(i.added)).length]]:[['Cancellations',owned.filter(i=>i.kind==='Special cancellation').length],['Miniature sheets',owned.filter(i=>i.kind==='Miniature sheet').length],['Stamps',owned.filter(i=>i.kind==='Stamp').length],['Countries',new Set(owned.map(i=>i.country||'India')).size]]).map(([l,v])=>`<div class="tile" style="color:var(--stamps)"><strong style="font-size:1.7rem">${v}</strong><span>${l}</span></div>`).join('')}</div>`+
+  treeCard(r.g?esc(r.g)+', by year':'By country and year',`<form class="add" id="f-stamp" data-coin="${coin?1:0}"><input type="text" name="t" placeholder="${coin?'Add a coin, like ₹20 2019 Bharat':'Add an item, like World Television Day'}" required aria-label="Item">${coin?'':`<select name="kind" aria-label="Kind">${kinds.map(k=>`<option>${k}</option>`).join('')}</select>`}<input type="text" name="country" list="countries" placeholder="Country" value="${esc(r.g&&r.g!=='Wishlist'?r.g:'India')}" aria-label="Country" style="flex:0 1 9em"><input type="date" name="d" aria-label="Issue date"><select name="owned" aria-label="Status"><option value="1">Have it</option><option value="0">Wishlist</option></select><button class="btn">Add</button></form><datalist id="countries">${[...new Set(S.stamps.map(i=>i.country||'India'))].map(c=>`<option value="${esc(c)}">`).join('')}</datalist>`)+
+  `<div class="card"><h2>To get</h2>${tree(tasksOf('stamps').filter(t=>tStat(t)!=='done'),[],taskLeaf,'stp:get',0)}</div>`}
+ if(sp.coll==='reading'){const groups=[...new Set(S.reading.filter(i=>(i.sub||'')===sub).map(i=>i.group||'Unsorted'))];
+  return head+`<div class="card"><h2>Save links</h2><form class="add" id="f-link" data-sub="${esc(sub)}"><input type="url" name="url" placeholder="Paste a link" required aria-label="Link"><input type="text" name="t" placeholder="Title (optional)" aria-label="Title"><input type="text" name="group" list="groups" placeholder="Topic" value="${esc(r.g||'')}" aria-label="Topic" style="flex:0 1 10em"><button class="btn">Save</button></form><datalist id="groups">${groups.map(g=>`<option value="${esc(g)}">`).join('')}</datalist>
+<details class="gt"><summary><span class="cv">${chev}</span>Add many links at once</summary><div class="gb"><form id="f-bulk" data-sub="${esc(sub)}" style="display:flex;flex-direction:column;gap:8px;padding:4px 0 8px"><textarea name="links" rows="4" placeholder="One link per line. Optional title first:&#10;Robot arm basics | https://example.com/arm" aria-label="Links"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" name="group" list="groups" placeholder="Topic for all" value="${esc(r.g||'')}" aria-label="Topic" style="flex:1 1 12em"><button class="btn soft">Save all</button></div></form></div></details></div>`+treeCard(r.g?'Links':'By topic')+(sub?'':'')}
+ if(sp.coll==='topics')return head+treeCard('Topics',`<form class="add" id="f-topic"><input type="text" name="t" placeholder="Add a topic" required aria-label="Topic"><button class="btn">Add</button></form>`)+`<div class="card"><h2>Learning to-dos</h2>${taskForm('learning','','Add a learning to-do')}${tree(tasksOf('learning','topics'),[{key:t=>tStat(t),label:k=>ST[k][0],order:(x,y)=>statusOrder.indexOf(x)-statusOrder.indexOf(y),closed:k=>k==='done'}],taskLeaf,'lrn:todos',0)}</div>`;
+ if(sp.coll==='projects'&&a.id==='patents')return head+treeCard(r.g?'Items':'By stage',`<form class="add" id="f-proj" data-area="patents"><input type="text" name="t" placeholder="New disclosure or paper" required aria-label="Title"><select name="kind" aria-label="Kind"><option>Patent</option><option>Paper</option></select><button class="btn">Add</button></form>`);
+ if(sp.coll==='projects')return head+treeCard('Tracking',`<form class="add" id="f-proj" data-area="${a.id}" data-sub="${esc(sub)}"><input type="text" name="t" placeholder="Add something to track" required aria-label="Name"><button class="btn">Add</button></form>`);
+ if(s.id==='errands')return head+treeCard(r.g?'Errands':'By place',taskForm('home','','Add an errand (set a place to group it)'));
+ return head+treeCard('To-dos',taskForm(a.id,sub,'Add a to-do'))}
+function vCheckin(){const ci=S.checkins[TODAY]||[];const p=S.habits.length?ci.length/S.habits.length:0;const n=Math.max(S.habits.length,1);const st=new Date();st.setDate(st.getDate()-83-((st.getDay()+6)%7));let heat='';for(let d=new Date(st);d<=new Date();d.setDate(d.getDate()+1)){const k=dk(d);const v=((S.checkins[k]||[]).length)/n;heat+=`<i title="${fmtD(k)}: ${Math.round(v*100)}%" style="${v?`background:color-mix(in srgb,var(--done) ${Math.round(25+v*75)}%,transparent)`:''}"></i>`}
+ return banner()+crumbs(['This week','#week'],['Daily check-in'])+`<h1>Daily check-in</h1><p class="lede">${Math.round(p*100)}% done today · ${streak()} day streak</p>
+<div class="card"><h2>Today</h2>${habitChips()}<form class="add" id="f-habit" style="margin-top:14px"><input type="text" name="t" placeholder="Add a daily habit" required aria-label="New habit"><select name="area" aria-label="Section">${AREAS.map(x=>`<option value="${x.id}">${x.n}</option>`).join('')}</select><button class="btn">Add</button></form>
+${S.habits.length?`<details class="gt"><summary><span class="cv">${chev}</span>Edit habits</summary><div class="gb">${S.habits.map(h=>`<div class="lf" style="cursor:default"><div class="t"><b>${esc(h.t)}</b></div><button class="x" data-act="delhabit" data-id="${esc(h.id)}" aria-label="Remove">×</button></div>`).join('')}</div></details>`:''}</div>
+<div class="card"><h2>Last 12 weeks</h2><div class="heat">${heat}</div><p class="muted" style="margin:10px 0 0;font-size:.85rem">Each square is a day, Monday at the top. Darker means more of the check-in done.</p></div>`}
+function vSearch(){const s=q.trim().toLowerCase();const hit=x=>[x.t,x.note,x.url,x.place,x.country,x.group,x.kind].join(' ').toLowerCase().includes(s);const groups=[['To-dos','tasks',taskLeaf],['Collection','stamps',stampLeaf],['Reading list','reading',readLeaf],['Projects and patents','projects',projLeaf],['Study topics','topics',topicLeaf]];let total=0;
+ const body=groups.map(([n,c,leaf])=>{const L=S[c].filter(hit);total+=L.length;return L.length?`<details class="gt" open><summary><span class="cv">${chev}</span>${n}<span class="cnt">${L.length}</span></summary><div class="gb">${L.map(leaf).join('')}</div></details>`:''}).join('');
+ return `<h1>Search</h1><p class="lede">${total} result${total===1?'':'s'} for “${esc(q)}”</p><div class="card">${body||'<div class="empty">No matches.</div>'}</div>`}
+/* ================= drawer ================= */
+const getItem=()=>sel&&S[sel.coll]?S[sel.coll].find(x=>x.id===sel.id):null;
+const fld=(l,h)=>`<label class="field"><span>${l}</span>${h}</label>`;
+const inp=(f,v,t='text',extra='')=>`<input type="${t}" data-f="${f}" value="${esc(v??'')}" ${extra}>`;
+const selF=(f,v,opts)=>`<select data-f="${f}">${opts.map(o=>{const[val,lab]=Array.isArray(o)?o:[o,o];return `<option value="${esc(val)}" ${String(val)===String(v??'')?'selected':''}>${esc(lab)}</option>`}).join('')}</select>`;
+function itemHTML(){const x=getItem();if(!x)return null;const C=sel.coll;const a=AC[x.area]||(C==='stamps'?AC.stamps:C==='reading'||C==='topics'?AC.learning:null);let f='',top='',path='';
+ if(C==='tasks'){const subs=a?subsOf(a):[];path=a?`${a.n} / ${subs.find(s=>s.id===tSub(x))?.n||''}`:'';f=fld('Status',selF('status',x.status,[['open','To do'],['waiting','Waiting'],['done','Done']]))+fld('Section',selF('area',x.area,AREAS.map(z=>[z.id,z.n])))+(subs.length?fld('Part',selF('sub',tSub(x),subs.map(s=>[s.id,s.n]))):'')+fld('Where',inp('place',x.place,'text','placeholder="Place"'))+fld('Due',inp('due',x.due,'date'))+fld('Added',`<span>${fmtD(x.added)||'–'}</span>`)}
+ if(C==='reading'){path=`Learning / ${esc(x.group||'Unsorted')}`;top=safeUrl(x.url)?`<a class="openlink" href="${safeUrl(x.url)}" target="_blank" rel="noopener"><span>Open link ↗</span><small>${esc(host(x.url))}</small></a>`:'';f=fld('Read',selF('read',x.read?'1':'0',[['0','Not yet'],['1','Read']]))+fld('Topic',inp('group',x.group,'text','list="groups"'))+fld('Link',inp('url',x.url,'url'))+fld('Added',`<span>${fmtD(x.added)||'–'}</span>`)+(x.read?fld('Read on',`<span>${fmtD(x.readOn)||'–'}</span>`):'')}
+ if(C==='stamps'){path=`${isCoin(x)?'Coins':'Stamps'} / ${esc(x.country||'India')} / ${x.d?x.d.slice(0,4):'Year not set'}`;f=fld('Kind',selF('kind',x.kind,KINDS))+fld('Country',inp('country',x.country||'India','text','list="countries"'))+fld('Issue date',inp('d',x.d,'date'))+fld('Status',selF('owned',x.owned===false?'0':'1',[['1','Have it'],['0','Wishlist']]))+fld('Issued by',inp('issuer',x.issuer,'text','placeholder="Karnataka Postal Circle"'))+fld('Where kept',inp('loc',x.loc,'text','placeholder="Album 1, page 4"'))+fld('Paid',inp('cost',x.cost,'text','placeholder="₹"'))}
+ if(C==='projects'){path=a?a.n:'';f=x.area==='patents'?fld('Stage',selF('stage',x.stage,STAGES))+fld('Kind',selF('kind',x.kind||'Patent',['Patent','Paper']))+fld('Target',inp('due',x.due,'date')):fld('Progress',`<span style="display:flex;gap:10px;align-items:center"><input type="range" min="0" max="100" step="5" data-f="progress" value="${x.progress||0}" aria-label="Progress"><b style="min-width:3em">${x.progress||0}%</b></span>`)+fld('Target',inp('due',x.due,'date'))}
+ if(C==='topics'){path='Learning / Study topics';f=fld('Progress',`<span style="display:flex;gap:10px;align-items:center"><input type="range" min="0" max="100" step="5" data-f="p" value="${x.p||0}" aria-label="Progress"><b style="min-width:3em">${x.p||0}%</b></span>`)}
+ const photo=x.img?`<div class="photo"><img data-photo="${esc(x.img)}" alt="${esc(x.t)}"><button class="rm" type="button" data-act="rmimg">Remove photo</button></div>`:B.photos&&connected?`<button class="ph" type="button" data-act="addimg">+ Add a photo</button>`:'';
+ return `<div class="dh"><span class="crumb" style="margin:0">${path}</span><button class="x" data-act="close" aria-label="Close">×</button></div><div class="db"><textarea class="dtitle" data-f="t" rows="1" aria-label="Title">${esc(x.t)}</textarea>${top}${photo}${f}<label style="display:block;margin-top:16px"><span class="muted" style="font-size:.85rem;display:block;margin-bottom:6px">${C==='reading'?'Takeaways':'Notes'}</span><textarea data-f="note" rows="5" placeholder="${C==='reading'?'What you took from it':'Anything worth remembering'}">${esc(x.note||'')}</textarea></label><div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px"><span class="muted" style="font-size:.8rem">${x.updated?'Edited '+fmtD(x.updated):''}</span><button class="btn danger" data-act="delitem">Delete</button></div></div>`}
+function storageHTML(){const mode=ls.get('la-mode');const fsOK='showDirectoryPicker' in window;const httpOK=/^https?:$/.test(location.protocol);
+ return `<div class="dh"><span class="crumb" style="margin:0">Storage and backup</span><button class="x" data-act="close" aria-label="Close">×</button></div><div class="db"><p class="muted" style="font-size:.9rem;margin-top:0">Your data is one file, <b>${DATA_FILE}</b>, kept beside this page in your <b>${FOLDER_NAME}</b> folder. Claude adds small <b>update-….json</b> files there when you tell it things in chat; they are applied the next time this page opens or regains focus.</p>
+<div class="opt ${mode==='folder'?'on':''}"><h3>Folder on this computer</h3><p>For your laptop. Pick the ${FOLDER_NAME} folder inside Google Drive for desktop. Works with Chrome or Edge, even when you open this file by double-clicking it.</p>${fsOK?`<button class="btn" data-act="pickfolder">${mode==='folder'?'Pick a different folder':'Pick folder'}</button>`:'<p style="color:var(--late);margin:0">This browser can’t open folders. Use Chrome or Edge on a computer, or Google Drive below.</p>'}</div>
+<div class="opt ${mode==='drive'?'on':''}"><h3>Google Drive online</h3><p>For your iPad, phone and any browser. Needs this page served from a web address (such as GitHub Pages) and a Google client ID, a one-time setup described in the README.</p>${httpOK?`<label class="field" style="border:0"><span>Client ID</span><input type="text" id="cid" value="${esc(Drive.cid())}" placeholder="…apps.googleusercontent.com"></label><button class="btn" data-act="usedrive">Sign in with Google</button>`:'<p style="margin:0">Open this page from its web address to use this option.</p>'}</div>
+<div class="opt ${mode==='local'?'on':''}"><h3>Just this browser</h3><p>Nothing leaves this device. Good for trying things out; use the copy below as a backup.</p><button class="btn soft" data-act="uselocal">Use this browser</button></div>
+<h3 style="margin:22px 0 8px;font-size:1rem">Backup</h3><textarea id="json" rows="10" spellcheck="false" style="font:12px ui-monospace,monospace" aria-label="Data as JSON">${esc(JSON.stringify(S,null,2))}</textarea><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center"><button class="btn soft" data-act="copyjson">Copy</button><button class="btn soft" data-act="dljson">Download</button><button class="btn soft" data-act="importjson">Replace with pasted data</button><span id="jmsg" class="muted" style="font-size:.85rem"></span></div></div>`}
+/* ================= charts ================= */
+function drawW(){const s=$('cw');if(!s)return;const W=s.clientWidth,H=s.clientHeight,F=S.fitness;const L=byDate(F.log.filter(e=>e.w!=null));if(!L.length||!W)return;const ml=38,mr=12,mt=12,mb=24;const ts=L.map(e=>+new Date(e.d));const t0=Math.min(...ts),t1=Math.max(...ts,t0+864e5*7);const ws=L.map(e=>e.w).concat(F.target!=null?[F.target]:[]);const lo=Math.floor(Math.min(...ws)-1),hi=Math.ceil(Math.max(...ws)+1);const X=t=>ml+(t-t0)/(t1-t0)*(W-ml-mr),Y=v=>mt+(hi-v)/(hi-lo)*(H-mt-mb);let g='';const step=Math.max(1,Math.ceil((hi-lo)/4));for(let v=lo;v<=hi;v+=step)g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;const nT=W<420?2:4;for(let i=0;i<=nT;i++){const t=t0+(t1-t0)*i/nT;g+=`<text x="${X(t)}" y="${H-4}" text-anchor="${i===0?'start':i===nT?'end':'middle'}">${fmtD(dk(t))}</text>`}if(F.target!=null)g+=`<line x1="${ml}" x2="${W-mr}" y1="${Y(F.target)}" y2="${Y(F.target)}" stroke="var(--done)" stroke-width="1.6" stroke-dasharray="5 4"/><text x="${W-mr}" y="${Y(F.target)-6}" text-anchor="end" style="fill:var(--done)">Target ${F.target}</text>`;const av=L.map(e=>{const w=L.filter(f=>new Date(e.d)-new Date(f.d)>=0&&new Date(e.d)-new Date(f.d)<7*864e5);return [X(+new Date(e.d)),Y(w.reduce((a,f)=>a+f.w,0)/w.length)]});g+=L.map(e=>`<circle cx="${X(+new Date(e.d))}" cy="${Y(e.w)}" r="3" fill="var(--fitness)" opacity=".35"/>`).join('')+`<polyline fill="none" stroke="var(--fitness)" stroke-width="2.6" stroke-linejoin="round" points="${av.map(p=>p.join(',')).join(' ')}"/>`;s.innerHTML=g}
+function drawC(){const s=$('cc');if(!s)return;const W=s.clientWidth,H=s.clientHeight;const L=byDate(S.fitness.log.filter(e=>e.w!=null&&e.bf!=null)).map(e=>({t:+new Date(e.d),f:e.w*e.bf/100,l:e.w*(1-e.bf/100)}));if(L.length<2||!W)return;const ml=34,mr=44,mt=10,mb=22;const t0=L[0].t,t1=Math.max(L[L.length-1].t,t0+864e5);const vs=L.flatMap(e=>[e.f,e.l]);const lo=Math.floor(Math.min(...vs)-2),hi=Math.ceil(Math.max(...vs)+2);const X=t=>ml+(t-t0)/(t1-t0)*(W-ml-mr),Y=v=>mt+(hi-v)/(hi-lo)*(H-mt-mb);const line=(k,c,n)=>`<polyline fill="none" stroke="${c}" stroke-width="2.6" points="${L.map(e=>X(e.t)+','+Y(e[k])).join(' ')}"/><text x="${X(L[L.length-1].t)+6}" y="${Y(L[L.length-1][k])+4}" style="fill:${c}">${n}</text>`;s.innerHTML=`<text x="${ml-6}" y="${Y(hi)+4}" text-anchor="end">${hi}</text><text x="${ml-6}" y="${Y(lo)+4}" text-anchor="end">${lo}</text><text x="${ml}" y="${H-4}">${fmtD(dk(t0))}</text><text x="${W-mr}" y="${H-4}" text-anchor="end">${fmtD(dk(t1))}</text>`+line('l','var(--todo)','Lean')+line('f','var(--fitness)','Fat')}
+const ro=new ResizeObserver(()=>{drawW();drawC()});
+/* ================= render ================= */
+function render(){const r=route();nav(r);const ae=document.activeElement;
+ $('page').innerHTML=r.v==='week'?vWeek():r.v==='status'?vStatus(r):r.v==='checkin'?vCheckin():r.v==='search'?vSearch():r.v==='area'?vArea(r):vSub(r);
+ const dh=drawer==='storage'?storageHTML():drawer==='item'?itemHTML():null;if(drawer==='item'&&!dh){drawer=null;sel=null}
+ if(dh)$('drawer').innerHTML=dh;$('drawer').classList.toggle('open',!!dh);$('scrim').classList.toggle('on',!!dh||$('side').classList.contains('open'));
+ ro.disconnect();for(const id of ['cw','cc']){const e=$(id);if(e)ro.observe(e)}drawW();drawC();
+ const t=document.querySelector('.dtitle');if(t){t.style.height='auto';t.style.height=t.scrollHeight+'px'}
+ document.querySelectorAll('img[data-photo]').forEach(async im=>{const u=await B.url?.(im.dataset.photo);if(u)im.src=u;else im.style.display='none'});
+ if(ae&&ae.id==='q')ae.focus()}
+function open(coll,id){sel={coll,id};drawer='item';render();$('drawer').scrollTop=0}
+function close(){drawer=null;sel=null;render()}
+/* ================= events ================= */
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.gt[data-p]'))return;const p=d.dataset.p;if(d.open){openSet.add(p);openSet.delete('!'+p);const gb=d.querySelector(':scope>.gb');if(gb&&!gb.innerHTML.trim()){render();return}}else{openSet.delete(p);openSet.add('!'+p)}ls.set('la-open',JSON.stringify([...openSet].slice(-400)))},true);
+document.addEventListener('click',async e=>{if(e.target.closest('[data-stop]'))return;const b=e.target.closest('[data-act]');
+ if(!b){const it=e.target.closest('[data-sel]');if(it&&!e.target.closest('input,select,textarea,summary')){e.preventDefault();open(it.dataset.sel,it.dataset.id)}return}
+ if(b.tagName==='SELECT'||b.type==='range')return;e.preventDefault();e.stopPropagation();const id=b.dataset.id,act=b.dataset.act;
+ const A={
+ habit:()=>mutate(s=>{const c=s.checkins[TODAY]=s.checkins[TODAY]||[];const i=c.indexOf(id);i<0?c.push(id):c.splice(i,1)}),
+ task:()=>mutate(s=>{const t=s.tasks.find(x=>x.id===id);if(!t)return;if(t.status==='done'){t.status='open';delete t.doneOn}else{t.status='done';t.doneOn=TODAY}},'Updated'),
+ read:()=>mutate(s=>{const x=s.reading.find(y=>y.id===id);if(x){x.read=!x.read;if(x.read)x.readOn=TODAY;else delete x.readOn}},'Updated'),
+ navtog:()=>{const k=b.dataset.k;navOpen.has(k)?navOpen.delete(k):navOpen.add(k);ls.set('la-nav',JSON.stringify([...navOpen]));nav(route())},
+ expand:()=>{document.querySelectorAll('#page .card details.gt[data-p]').forEach(d=>{const p=d.dataset.p;if(b.dataset.k==='1'){openSet.add(p);openSet.delete('!'+p)}else{openSet.delete(p);openSet.add('!'+p)}});if(b.dataset.k==='1'){for(let i=0;i<3;i++){render();document.querySelectorAll('#page .card details.gt[data-p]').forEach(d=>{openSet.add(d.dataset.p);openSet.delete('!'+d.dataset.p)})}}render()},
+ fs:()=>{const cur=parseFloat(getComputedStyle(document.documentElement).fontSize);const n=Math.max(13,Math.min(19,cur+ +b.dataset.k));document.documentElement.style.setProperty('--fs',n+'px');ls.set('la-fs',n)},
+ delhabit:()=>mutate(s=>{s.habits=s.habits.filter(t=>t.id!==id)},'Habit removed'),
+ dellog:()=>mutate(s=>{s.fitness.log=s.fitness.log.filter(x=>x.d!==id)},'Weigh-in deleted'),
+ delwo:()=>mutate(s=>{s.fitness.workouts=s.fitness.workouts.filter(x=>x.id!==id)},'Session deleted'),
+ delfood:()=>mutate(s=>{s.fitness.food=s.fitness.food.filter(x=>x.id!==id)},'Meal deleted'),
+ delitem:()=>{const c=sel.coll,i=sel.id;drawer=null;sel=null;mutate(s=>{s[c]=s[c].filter(x=>x.id!==i)},'Deleted')},
+ delsub:()=>{const a=route().a.id;mutate(s=>{s.subs=s.subs.filter(t=>t.id!==id)},'Subsection removed');location.hash=a},
+ close,storage:()=>{drawer='storage';sel=null;$('side').classList.remove('open');render()},
+ reconnect:()=>connect(b.dataset.k,'click'),
+ pickfolder:async()=>{if(await connect('folder','pick')){drawer=null;render();toast('Connected to your folder')}},
+ usedrive:async()=>{const v=$('cid').value.trim();if(!v){toast('Paste your Google client ID first');return}ls.set('la-cid',v);if(await connect('drive','click')){drawer=null;render();toast('Connected to Google Drive')}},
+ uselocal:async()=>{await connect('local');drawer=null;render();toast('Saving in this browser')},
+ copyjson:async()=>{try{await navigator.clipboard.writeText($('json').value);$('jmsg').textContent='Copied'}catch(_){$('json').select();$('jmsg').textContent='Select all and copy'}},
+ dljson:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download=DATA_FILE;a.click()},
+ importjson:()=>{try{const d=JSON.parse($('json').value);prev=JSON.stringify(S);S=norm(d);render();save();toast('Data replaced',true)}catch(_){$('jmsg').textContent='That isn’t valid JSON'}},
+ addimg:()=>{const f=document.createElement('input');f.type='file';f.accept='image/*';f.onchange=async()=>{const file=f.files[0];if(!file)return;const target={...sel};toast('Saving photo…');try{const name=await B.upload(file);mutate(s=>{const x=s[target.coll].find(y=>y.id===target.id);if(x){x.img=name;x.updated=TODAY}},'Photo added')}catch(_){toast('Couldn’t save that photo')}};f.click()},
+ rmimg:()=>mutate(s=>{const x=getItem();if(x)delete x.img},'Photo removed')};
+ A[act]?.()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.lf[data-sel]'))open(e.target.dataset.sel,e.target.dataset.id);if(e.key==='Escape'&&drawer)close()});
+$('scrim').onclick=()=>{$('side').classList.remove('open');close()};
+document.addEventListener('change',e=>{const t=e.target;const f=t.dataset.f;if(!f||!$('drawer').contains(t)||!sel)return;const target={...sel};
+ mutate(s=>{const x=s[target.coll].find(y=>y.id===target.id);if(!x)return;let v=t.value;if(t.type==='range')v=+v;if(f==='read'){x.read=v==='1';if(x.read)x.readOn=x.readOn||TODAY;else delete x.readOn}else if(f==='owned')x.owned=v==='1';else if(f==='status'){x.status=v;if(v==='done')x.doneOn=TODAY;else delete x.doneOn}else if(f==='area'){x.area=v;delete x.sub}else if(f==='sub'){if(v===DEFSUB[x.area]||!S.subs.some(z=>z.id===v))delete x.sub;else x.sub=v}else if(f==='t'){v=v.trim();if(v)x.t=v}else{if(v==='')delete x[f];else x[f]=v}x.updated=TODAY},'Saved')});
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='q'){q=t.value;if(q.trim()){if(location.hash!=='#search')location.hash='search';else render()}else if(location.hash==='#search')location.hash='week'}if(t.classList.contains('dtitle')){t.style.height='auto';t.style.height=t.scrollHeight+'px'}if(t.type==='range'&&t.dataset.f){const b=t.parentElement.querySelector('b');if(b)b.textContent=t.value+'%'}});
+document.addEventListener('submit',e=>{e.preventDefault();const f=e.target,d=Object.fromEntries(new FormData(f)),T=String(d.t||'').trim();const sub=f.dataset.sub||undefined;const H={
+ 'f-task':()=>T&&mutate(s=>s.tasks.push({id:uid(),t:T,area:f.dataset.area||d.area||'home',sub,place:String(d.place||'').trim()||undefined,due:d.due||undefined,status:'open',added:TODAY}),'Added'),
+ 'f-habit':()=>T&&mutate(s=>s.habits.push({id:uid(),t:T,area:d.area}),'Habit added'),
+ 'f-sub':()=>{const n=String(d.n||'').trim();if(!n)return;const id='s'+uid();mutate(s=>s.subs.push({id,area:f.dataset.area,n,type:d.type}),'Subsection added');location.hash=hashOf(f.dataset.area,id).slice(1)},
+ 'f-body':()=>{const w=num(d.w),bf=num(d.bf),wa=num(d.waist);if(w==null&&bf==null&&wa==null)return;mutate(s=>{const L=s.fitness.log;const ex=L.find(x=>x.d===d.d);const e2={d:d.d,w:w??ex?.w??null,bf:bf??ex?.bf??null,waist:wa??ex?.waist??null};if(ex)Object.assign(ex,e2);else L.push(e2)},'Logged')},
+ 'f-wo':()=>{const m=num(d.min);if(!m)return;mutate(s=>s.fitness.workouts.push({id:uid(),d:d.d,kind:String(d.kind||'Workout'),min:m}),'Workout logged')},
+ 'f-food':()=>{if(num(d.kcal)==null&&num(d.p)==null)return;mutate(s=>s.fitness.food.push({id:uid(),d:TODAY,t:T||'Meal',kcal:num(d.kcal)||0,p:num(d.p)||0}),'Meal logged')},
+ 'f-tgt':()=>mutate(s=>{s.fitness.target=num(d.target);s.fitness.kcalT=num(d.kcalT);s.fitness.protT=num(d.protT)},'Targets saved'),
+ 'f-stamp':()=>T&&mutate(s=>s.stamps.push({id:uid(),t:T,kind:f.dataset.coin==='1'?'Coin':d.kind,country:String(d.country||'').trim()||'India',d:d.d||undefined,owned:d.owned==='1',added:TODAY}),'Added'),
+ 'f-proj':()=>T&&mutate(s=>s.projects.push(f.dataset.area==='patents'?{id:uid(),t:T,area:'patents',kind:d.kind,stage:'Idea'}:{id:uid(),t:T,area:f.dataset.area,sub,progress:0}),'Added'),
+ 'f-link':()=>{const u=String(d.url||'').trim();if(!u)return;mutate(s=>s.reading.push({id:uid(),t:T||titleFrom(u),url:u,group:String(d.group||'').trim()||'Unsorted',sub,read:false,added:TODAY}),'Link saved')},
+ 'f-bulk':()=>{const g=String(d.group||'').trim()||'Unsorted';const its=String(d.links||'').split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^(.*?)\s*\|\s*(https?:\/\/\S+)$/);const u=m?m[2]:(l.match(/https?:\/\/\S+/)||[''])[0];return u?{t:m&&m[1]?m[1]:titleFrom(u),u}:null}).filter(Boolean);if(!its.length)return;mutate(s=>its.forEach(x=>s.reading.push({id:uid(),t:x.t,url:x.u,group:g,sub,read:false,added:TODAY})),its.length+' links saved')},
+ 'f-topic':()=>T&&mutate(s=>s.topics.push({id:uid(),t:T,p:0}),'Topic added')};H[f.id]?.()});
+$('menubtn').onclick=()=>{$('side').classList.toggle('open');$('scrim').classList.toggle('on',$('side').classList.contains('open'))};
+$('undo').onclick=()=>{if(prev){S=norm(JSON.parse(prev));prev=null;render();save();toast('Undone')}};
+addEventListener('hashchange',()=>{$('side').classList.remove('open');if(location.hash!=='#search'){q='';$('q').value=''}drawer=null;sel=null;render();$('main').scrollTop=0;scrollTo(0,0)});
+addEventListener('focus',async()=>{if(!connected)return;try{if(await B.changed?.()){const d=await B.load();if(d){S=norm(d);ls.set('la-cache',JSON.stringify(S));render()}}}catch(_){}pullInbox()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')dispatchEvent(new Event('focus'))});
+/* ================= boot ================= */
+{const fs=ls.get('la-fs');if(fs)document.documentElement.style.setProperty('--fs',fs+'px')}
+{const c=ls.get('la-cache');if(c){try{S=norm(JSON.parse(c))}catch(_){}}}
+window.__la={applyOps,Folder,connect,get S(){return S}};
+render();
+(async()=>{const mode=ls.get('la-mode');if(mode){const ok=await connect(mode);if(!ok){storeLabel('warn',needs==='folder'?'Tap to reconnect your folder':needs==='drive'?'Tap to sign in to Google':'Not connected');render()}}else{storeLabel('warn','Choose where to keep data');render()}})();
+}
+</script>
+</body>
+</html>

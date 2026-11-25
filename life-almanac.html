@@ -230,7 +230,7 @@ const Folder={name:'Folder',dir:null,
 const Drive={name:'Google Drive',token:null,exp:0,folder:null,file:null,
  cid(){return ls.get('la-cid')||''},
  loadGis(){return new Promise((res,rej)=>{if(window.google?.accounts?.oauth2)return res();const s=document.createElement('script');s.src='https://accounts.google.com/gsi/client';s.onload=()=>res();s.onerror=()=>rej(new Error('Could not load Google sign-in'));document.head.appendChild(s)})},
- async signIn(){await this.loadGis();await new Promise((res,rej)=>{const c=google.accounts.oauth2.initTokenClient({client_id:this.cid(),scope:'https://www.googleapis.com/auth/drive',callback:r=>{if(r.error)return rej(new Error(r.error));this.token=r.access_token;this.exp=Date.now()+(r.expires_in-60)*1000;res()}});c.requestAccessToken({prompt:this.token?'':'consent'})});await this.locate()},
+ signIn(){return new Promise((res,rej)=>{const go=()=>{try{const c=google.accounts.oauth2.initTokenClient({client_id:this.cid(),scope:'https://www.googleapis.com/auth/drive',callback:r=>{if(r.error)return rej(new Error('Google sign-in: '+r.error));this.token=r.access_token;this.exp=Date.now()+(r.expires_in-60)*1000;this.locate().then(res,rej)},error_callback:e=>rej(new Error(e&&e.type==='popup_failed_to_open'?'The sign-in window was blocked. Allow pop-ups for this site and try again.':e&&e.type==='popup_closed'?'Sign-in window closed.':'Google sign-in failed.'))});c.requestAccessToken({prompt:this.token?'':'consent'})}catch(e){rej(e)}};if(window.google?.accounts?.oauth2)go();else this.loadGis().then(()=>rej(new Error('Google sign-in is ready now. Tap the button once more.'))).catch(rej)})},
  ready(){return this.token&&Date.now()<this.exp},
  async api(path,opt={}){if(!this.ready())throw Object.assign(new Error('Signed out'),{code:'auth'});const r=await fetch(path.startsWith('http')?path:'https://www.googleapis.com/drive/v3/'+path,{...opt,headers:{Authorization:'Bearer '+this.token,...(opt.headers||{})}});if(r.status===401){this.token=null;throw Object.assign(new Error('Signed out'),{code:'auth'})}if(!r.ok)throw new Error('Drive error '+r.status);return r},
  async find(qs){const r=await this.api('files?q='+encodeURIComponent(qs+' and trashed=false')+'&fields=files(id,name,modifiedTime)&pageSize=200');return (await r.json()).files||[]},
@@ -260,7 +260,7 @@ let lastInbox=0;
 async function pullInbox(force){if(!connected||(!force&&Date.now()-lastInbox<20000))return;lastInbox=Date.now();try{const items=await B.inbox();let n=0,files=0;for(const it of items){if(it.bad){continue}if(!S.applied.includes(it.name)){n+=applyOps(S,it.body.ops||[]);S.applied.push(it.name);S.applied=S.applied.slice(-200);files++}await B.done(it.name,it)}if(files){S=norm(S);render();await save();toast(`Applied ${n} update${n===1?'':'s'} from Claude`)}}catch(_){}}
 async function connect(kind,fromClick){try{
  if(kind==='folder'){let dir=Folder.dir||await idb.get('dir');if(!dir||fromClick==='pick'){dir=await window.showDirectoryPicker({id:'life-almanac',mode:'readwrite'})}const p=await dir.queryPermission({mode:'readwrite'});if(p!=='granted'){if(!fromClick){needs='folder';return false}if(await dir.requestPermission({mode:'readwrite'})!=='granted')return false}await Folder.attach(dir);B=Folder}
- else if(kind==='drive'){if(!Drive.cid()){needs='drive';return false}if(!Drive.ready()){if(!fromClick){needs='drive';return false}await Drive.signIn()}B=Drive}
+ else if(kind==='drive'){if(!Drive.cid()){needs='drive';return false}if(!Drive.ready()){if(!fromClick){needs='drive';return false}const p=Drive.signIn();toast('Opening Google sign-in…');await p}B=Drive}
  else B=Local;
  const remote=await B.load();const cache=ls.get('la-cache');const dirty=ls.get('la-dirty')==='1';
  if(dirty&&cache){const c=JSON.parse(cache);if(!remote||(c.updated||'')>(remote.updated||'')){S=norm(c);connected=true;needs=null;ls.set('la-mode',kind);await save()}else S=norm(remote)}
@@ -427,7 +427,7 @@ document.addEventListener('click',async e=>{if(e.target.closest('[data-stop]'))r
  close,storage:()=>{drawer='storage';sel=null;$('side').classList.remove('open');render()},
  reconnect:()=>connect(b.dataset.k,'click'),
  pickfolder:async()=>{if(await connect('folder','pick')){drawer=null;render();toast('Connected to your folder')}},
- usedrive:async()=>{const v=$('cid').value.trim();if(!v){toast('Paste your Google client ID first');return}ls.set('la-cid',v);if(await connect('drive','click')){drawer=null;render();toast('Connected to Google Drive')}},
+ usedrive:()=>{const v=$('cid').value.trim();if(!v){toast('Paste your Google client ID first');return}ls.set('la-cid',v);connect('drive','click').then(ok=>{if(ok){drawer=null;render();toast('Connected to Google Drive')}})},
  uselocal:async()=>{await connect('local');drawer=null;render();toast('Saving in this browser')},
  copyjson:async()=>{try{await navigator.clipboard.writeText($('json').value);$('jmsg').textContent='Copied'}catch(_){$('json').select();$('jmsg').textContent='Select all and copy'}},
  dljson:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download=DATA_FILE;a.click()},
@@ -459,6 +459,7 @@ addEventListener('hashchange',()=>{$('side').classList.remove('open');if(locatio
 addEventListener('focus',async()=>{if(!connected)return;try{if(await B.changed?.()){const d=await B.load();if(d){S=norm(d);ls.set('la-cache',JSON.stringify(S));render()}}}catch(_){}pullInbox()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')dispatchEvent(new Event('focus'))});
 /* ================= boot ================= */
+if(/^https?:$/.test(location.protocol))Drive.loadGis().catch(()=>{});
 {const fs=ls.get('la-fs');if(fs)document.documentElement.style.setProperty('--fs',fs+'px')}
 {const c=ls.get('la-cache');if(c){try{S=norm(JSON.parse(c))}catch(_){}}}
 window.__la={applyOps,Folder,connect,get S(){return S}};
